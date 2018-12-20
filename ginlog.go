@@ -51,6 +51,8 @@ func Logger(logger *zap.Logger, opts Options) gin.HandlerFunc {
 			body = body[:opts.RequestBodyLimit]
 		}
 
+		ctx.Set("requestId", requestID)
+
 		logger.Info(">>>", append([]zap.Field{
 			zap.String("dir", "in"),
 			zap.String("requestId", requestID),

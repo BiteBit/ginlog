@@ -1,6 +1,7 @@
 package ginlog
 
 import (
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -16,7 +17,6 @@ type (
 	// Options 中间件配置参数
 	Options struct {
 		RequestID         bool
-		TimeFormat        string
 		RequestBodyLimit  int
 		RequestQueryLimit int
 		ResponseBodyLimit int
@@ -53,10 +53,8 @@ func Logger(logger *zap.Logger, opts Options) gin.HandlerFunc {
 
 		ctx.Set("requestId", requestID)
 
-		logger.Info(">>>", append([]zap.Field{
-			zap.String("dir", "in"),
+		logger.Info(uid(">>>", ctx), append([]zap.Field{
 			zap.String("requestId", requestID),
-			zap.String("time", start.Format(opts.TimeFormat)),
 			zap.String("method", method),
 			zap.String("path", path),
 			zap.String("ip", clientIP),
@@ -79,10 +77,8 @@ func Logger(logger *zap.Logger, opts Options) gin.HandlerFunc {
 		}
 
 		for _, err := range ctx.Errors {
-			logger.Info("|||",
-				zap.String("dir", "err"),
+			logger.Info(uid("xxx", ctx),
 				zap.String("requestId", requestID),
-				zap.String("time", end.Format(opts.TimeFormat)),
 				zap.String("method", method),
 				zap.String("path", path),
 				zap.String("ip", clientIP),
@@ -94,11 +90,9 @@ func Logger(logger *zap.Logger, opts Options) gin.HandlerFunc {
 			)
 		}
 
-		logger.Info("<<<",
+		logger.Info(uid("<<<", ctx),
 			append([]zap.Field{
-				zap.String("dir", "out"),
 				zap.String("requestId", requestID),
-				zap.String("time", end.Format(opts.TimeFormat)),
 				zap.String("method", method),
 				zap.String("path", path),
 				zap.String("ip", clientIP),
@@ -148,4 +142,15 @@ func newProductionEncoderConfig() zapcore.EncoderConfig {
 
 func defaultHook(*gin.Context) []zap.Field {
 	return []zap.Field{}
+}
+
+func uid(prefix string, ctx *gin.Context) string {
+	var b strings.Builder
+
+	b.WriteString(prefix)
+	b.WriteString("[")
+	b.WriteString(ctx.GetString("uid"))
+	b.WriteString("]")
+
+	return b.String()
 }

@@ -53,7 +53,7 @@ func Logger(logger *zap.Logger, opts Options) gin.HandlerFunc {
 
 		ctx.Set("requestId", requestID)
 
-		logger.Info(uid(">>>", ctx), append([]zap.Field{
+		logger.Named(name(ctx)).Info(">>>", append([]zap.Field{
 			zap.String("requestId", requestID),
 			zap.String("method", method),
 			zap.String("path", path),
@@ -77,7 +77,7 @@ func Logger(logger *zap.Logger, opts Options) gin.HandlerFunc {
 		}
 
 		for _, err := range ctx.Errors {
-			logger.Info(uid("xxx", ctx),
+			logger.Named(name(ctx)).Info("xxx",
 				zap.String("requestId", requestID),
 				zap.String("method", method),
 				zap.String("path", path),
@@ -90,7 +90,7 @@ func Logger(logger *zap.Logger, opts Options) gin.HandlerFunc {
 			)
 		}
 
-		logger.Info(uid("<<<", ctx),
+		logger.Named(name(ctx)).Info("<<<",
 			append([]zap.Field{
 				zap.String("requestId", requestID),
 				zap.String("method", method),
@@ -144,12 +144,14 @@ func defaultHook(*gin.Context) []zap.Field {
 	return []zap.Field{}
 }
 
-func uid(prefix string, ctx *gin.Context) string {
+func name(ctx *gin.Context) string {
 	var b strings.Builder
 
-	b.WriteString(prefix)
 	b.WriteString("[")
 	b.WriteString(ctx.GetString("uid"))
+	b.WriteString("]")
+	b.WriteString("[")
+	b.WriteString(ctx.GetString("requestId"))
 	b.WriteString("]")
 
 	return b.String()
